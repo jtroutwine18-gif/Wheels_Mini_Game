@@ -117,7 +117,7 @@ def _pick_many(wheel_name: str, k: int) -> List[str]:
 
 def spin_round(did_cheat: bool, did_win: bool) -> Dict[str, Any]:
     """
-    Runs ONE full 'round spin' equivalent to your terminal game:
+    Runs ONE full 'round spin' equivalent to terminal game:
     - Skips Replacement & Color Selection during initial spin
     - Winner's Wheel only if did_win
     - Cheater's Wheel only if did_cheat
@@ -189,4 +189,5 @@ def apply_replacement(state: Dict[str, Any], wheel_to_replace: str) -> Tuple[Dic
     state["replacement_used"] = True
     state["results"] = results
     return state, f"{wheel_to_replace} replaced with: {new_value}"
+
 
