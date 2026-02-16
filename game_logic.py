@@ -2,7 +2,7 @@
 import random
 from typing import Dict, List, Any, Tuple
 
-# Wheels copied from your MTGwheelsV3.py (with one small fix: missing comma in First Condition list)
+# Wheels copied from MTGwheelsV3.py 
 WHEELS: Dict[str, List[str]] = {
     "Tribe Type": [
         "Advisor", "Merfolk", "Serf", "Aetherborn", "Elf", "Serpent",
@@ -189,3 +189,4 @@ def apply_replacement(state: Dict[str, Any], wheel_to_replace: str) -> Tuple[Dic
     state["replacement_used"] = True
     state["results"] = results
     return state, f"{wheel_to_replace} replaced with: {new_value}"
+
