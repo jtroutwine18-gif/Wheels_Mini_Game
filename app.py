@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import session
 from game_logic import spin_round, apply_replacement
+from game_logic import spin_round, apply_replacement, apply_reroll
 
 import random
 
@@ -16,6 +17,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+
 # -------------------------
 # Database Model
 # -------------------------
@@ -25,15 +27,18 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(200))
     wins = db.Column(db.Integer, default=0)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # -------------------------
 # Wheel Logic
 # -------------------------
 def spin_wheel():
     return random.randint(10, 100)
+
 
 # -------------------------
 # Routes
@@ -46,6 +51,22 @@ def home():
     last_message = session.get("last_message")
     won_last_round = session.get("won_last_round", False)
     return render_template("home.html", did_cheat=did_cheat, state=state, last_message=last_message, won_last_round=won_last_round)
+
+
+@app.route("/reroll", methods=["POST"])
+@login_required
+def reroll():
+    state = session.get("last_state")
+    if not state:
+        return redirect(url_for("home"))
+
+    wheel_to_reroll = request.form.get("wheel")
+    state, msg = apply_reroll(state, wheel_to_reroll)
+
+    session["last_state"] = state
+    session["last_message"] = msg
+    return redirect(url_for("home"))
+
 
 @app.route("/set_cheat", methods=["POST"])
 def set_cheat():
@@ -78,6 +99,7 @@ def spin():
     session["last_message"] = None
     return redirect(url_for("home"))
 
+
 @app.route("/replace", methods=["POST"])
 @login_required
 def replace():
@@ -107,6 +129,7 @@ def win():
 
     return redirect(url_for("home"))
 
+
 @app.route("/clear_spin", methods=["POST"])
 @login_required
 def clear_spin():
@@ -119,11 +142,13 @@ def clear_spin():
 
     return redirect(url_for("home"))
 
+
 @app.route("/leaderboard")
 @login_required
 def leaderboard():
     users = User.query.order_by(User.wins.desc()).all()
     return render_template("leaderboard.html", users=users)
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -135,6 +160,7 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -144,14 +170,15 @@ def login():
             return redirect(url_for("home"))
     return render_template("login.html")
 
+
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
 
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-

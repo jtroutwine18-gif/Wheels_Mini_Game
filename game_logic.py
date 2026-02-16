@@ -2,7 +2,7 @@
 import random
 from typing import Dict, List, Any, Tuple
 
-# Wheels copied from MTGwheelsV3.py 
+# Wheels copied from your MTGwheelsV3.py (with one small fix: missing comma in First Condition list)
 WHEELS: Dict[str, List[str]] = {
     "Tribe Type": [
         "Advisor", "Merfolk", "Serf", "Aetherborn", "Elf", "Serpent",
@@ -117,7 +117,7 @@ def _pick_many(wheel_name: str, k: int) -> List[str]:
 
 def spin_round(did_cheat: bool, did_win: bool) -> Dict[str, Any]:
     """
-    Runs ONE full 'round spin' equivalent to terminal game:
+    Runs ONE full 'round spin' equivalent to your terminal game:
     - Skips Replacement & Color Selection during initial spin
     - Winner's Wheel only if did_win
     - Cheater's Wheel only if did_cheat
@@ -163,6 +163,7 @@ def spin_round(did_cheat: bool, did_win: bool) -> Dict[str, Any]:
         "notes": notes,
         "did_cheat": did_cheat,
         "did_win": did_win,
+        "rerolled": [],
     }
 
 
@@ -190,4 +191,50 @@ def apply_replacement(state: Dict[str, Any], wheel_to_replace: str) -> Tuple[Dic
     state["results"] = results
     return state, f"{wheel_to_replace} replaced with: {new_value}"
 
+def apply_reroll(state: Dict[str, Any], wheel_to_reroll: str) -> Tuple[Dict[str, Any], str]:
+    """
+    Allows rerolling each wheel at most once per round.
+    Rerolls the selected wheel's current value using its original wheel options.
+    """
+    if "rerolled" not in state:
+        state["rerolled"] = []
 
+    # Reroll logic matches your spin rules
+
+    results = state.get("results", {})
+    if wheel_to_reroll not in results:
+        return state, "Invalid wheel selection."
+
+    if wheel_to_reroll in state["rerolled"]:
+        return state, f"You already rerolled {wheel_to_reroll} this round."
+
+    if wheel_to_reroll == "Mana Base":
+        mana_count = int(results["Mana Base"])
+        results["Color Selection"] = _pick_many("Color Selection", mana_count)
+
+
+    if wheel_to_reroll == "Tribe Type":
+        results[wheel_to_reroll] = _pick_many("Tribe Type", 2)
+
+    elif wheel_to_reroll.startswith("First Condition"):
+        # First Condition is 2 spins if cheater else 1
+        spins = 2 if state.get("did_cheat", False) else 1
+        results[wheel_to_reroll] = _pick_many(wheel_to_reroll, spins)
+
+    elif wheel_to_reroll == "Color Selection":
+        mana_count = int(results["Mana Base"])
+        results["Color Selection"] = _pick_many("Color Selection", mana_count)
+
+
+    else:
+        # Standard single choice reroll
+        results[wheel_to_reroll] = _pick_one(wheel_to_reroll)
+
+    # If Mana Base changed, re-roll Color Selection to match new mana count
+    if wheel_to_reroll == "Mana Base":
+        mana_count = int(results["Mana Base"])
+        results["Color Selection"] = _pick_many("Color Selection", mana_count)
+
+    state["rerolled"].append(wheel_to_reroll)
+    state["results"] = results
+    return state, f"Rerolled {wheel_to_reroll}."
