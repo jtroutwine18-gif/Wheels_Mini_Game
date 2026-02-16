@@ -1,0 +1,14 @@
+<table>
+  <tr>
+    <th>Rank</th>
+    <th>User</th>
+    <th>Wins</th>
+  </tr>
+  {% for user in users %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ user.username }}</td>
+    <td>{{ user.wins }}</td>
+  </tr>
+  {% endfor %}
+</table>

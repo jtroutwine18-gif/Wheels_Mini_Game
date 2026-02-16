@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome, {{ current_user.username }}</h1>
+<p class="points">Wins: {{ current_user.wins }}</p>
+
+{% if did_cheat is none %}
+  <div class="result-box">
+    <h3>Did you cheat?</h3>
+    <div class="win-row">
+      <form method="POST" action="/set_cheat">
+        <input type="hidden" name="cheat" value="yes">
+        <button type="submit">Yes 😈</button>
+      </form>
+      <form method="POST" action="/set_cheat">
+        <input type="hidden" name="cheat" value="no">
+        <button type="submit">No 😇</button>
+      </form>
+    </div>
+  </div>
+
+{% else %}
+
+  {% if not state %}
+    <p>Cheat mode: <strong>{{ "YES" if did_cheat else "NO" }}</strong></p>
+
+    {% if won_last_round %}
+      <p><strong>Winner bonus ready:</strong> Winner’s Wheel will be included on your next spin 🏆</p>
+    {% endif %}
+
+    <form method="POST" action="/spin">
+      <button class="spin-btn" type="submit">SPIN</button>
+    </form>
+
+    <div class="links">
+      <a href="/leaderboard">Leaderboard</a>
+      <a href="/logout">Logout</a>
+    </div>
+
+
+  {% else %}
+    <p>Cheat mode: <strong>{{ "YES" if state.did_cheat else "NO" }}</strong></p>
+
+    {% if last_message %}
+      <p><strong>{{ last_message }}</strong></p>
+    {% endif %}
+
+    <div class="result-box">
+      <h3>Spin Result</h3>
+      <ul>
+        {% for key, value in state.results.items() %}
+          <li>
+            <strong>{{ key }}:</strong>
+            {% if value is sequence and value is not string %}
+              {{ value|join(", ") }}
+            {% else %}
+              {{ value }}
+            {% endif %}
+            {% if key in state.replaced %}
+              <strong>(replaced)</strong>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if state.replacement_available and (not state.replacement_used) %}
+      <div class="result-box" style="margin-top:12px;">
+        <h3>Use your one Replacement?</h3>
+        <form method="POST" action="/replace">
+          <select name="wheel" required>
+            {% for key in state.results.keys() %}
+              <option value="{{ key }}">{{ key }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Replace</button>
+        </form>
+      </div>
+    {% endif %}
+
+    <div class="result-box" style="margin-top:12px;">
+      <h3>Did you win?</h3>
+      <div class="win-row">
+        <form method="POST" action="/win">
+          <button type="submit">Yes ✅</button>
+        </form>
+        <form method="POST" action="/clear_spin">
+          <button type="submit">No ❌</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="links">
+      <a href="/leaderboard">Leaderboard</a>
+      <a href="/logout">Logout</a>
+    </div>
+
+  {% endif %}
+{% endif %}
+{% endblock %}
